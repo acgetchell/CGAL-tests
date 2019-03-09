@@ -11,48 +11,42 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endif()
 
 # CMake modules
-include(CheckCXXCompilerFlag)
-
-# CMake functions
-
-# Check if compiler flag supported
-function(enable_cxx_compiler_flag_if_supported flag)
-  string(FIND "${CMAKE_CXX_FLAGS}" "${flag}" flag_already_set)
-  if(flag_already_set EQUAL -1)
-    check_cxx_compiler_flag("${flag}" flag_supported)
-    if(flag_supported)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}" PARENT_SCOPE)
-    endif()
-    unset(flag_supported CACHE)
-  endif()
-endfunction()
+include(CMakeDependentOption)
 
 # Compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Compiler flags
-enable_cxx_compiler_flag_if_supported("-Wmisleading-indentation")
-enable_cxx_compiler_flag_if_supported("-frounding-math")
-enable_cxx_compiler_flag_if_supported("-Wduplicated-cond")
-enable_cxx_compiler_flag_if_supported("-Wuplicated-branches")
-enable_cxx_compiler_flag_if_supported("-Wlogical-op")
-enable_cxx_compiler_flag_if_supported("-Wuseless-cast")
-enable_cxx_compiler_flag_if_supported("-Wall")
-enable_cxx_compiler_flag_if_supported("-Wno-comment")
-enable_cxx_compiler_flag_if_supported("-Wextra")
-enable_cxx_compiler_flag_if_supported("-Wshadow")
-enable_cxx_compiler_flag_if_supported("-Wnon-virtual-dtor")
-enable_cxx_compiler_flag_if_supported("-Wold-style-cast")
-enable_cxx_compiler_flag_if_supported("-Wcast-align")
-enable_cxx_compiler_flag_if_supported("-Wunused")
-enable_cxx_compiler_flag_if_supported("-Woverloaded-virtual")
-enable_cxx_compiler_flag_if_supported("-Wpedantic")
-enable_cxx_compiler_flag_if_supported("-Wconversion")
-enable_cxx_compiler_flag_if_supported("-Wsign-conversion")
-enable_cxx_compiler_flag_if_supported("-Wnull-dereference")
-enable_cxx_compiler_flag_if_supported("-Wdouble-promotion")
-enable_cxx_compiler_flag_if_supported("-Wformat=2")
-enable_cxx_compiler_flag_if_supported("-Werror=return-type")
+# Threads
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+
+# Turn off CGAL Triangulation Assertions and Postconditions
+add_definitions(-DCGAL_TRIANGULATION_NO_ASSERTIONS
+    -DCGAL_TRIANGULATION_NO_POSTCONDITIONS -DCGAL_USE_BASIC_VIEWER -DWITH_CGAL_Qt5)
+
+# Disable CLion generation of RelWithDebInfo and MinSizeRel to avoid conflicts
+# with CGAL_SetupFlags.cmake
+set(CMAKE_CONFIGURATION_TYPES
+    "Release"
+    "Debug"
+    "RelWithDebInfo"
+    CACHE STRING ""
+    FORCE)
+
+# CGAL
+find_package(CGAL COMPONENTS Core Qt5 REQUIRED)
+if(CGAL_FOUND)
+  # Don't let CGAL override flags
+  set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE true)
+  set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE
+      CACHE BOOL "Force CGAL to maintain CMAKE flags")
+  include(${CGAL_USE_FILE})
+  include(CGAL_CreateSingleSourceCGALProgram)
+else()
+  message(
+      FATAL_ERROR
+      "Notice: This program requires the CGAL library, and will not be compiled."
+  )
+endif()
 
 # Qt
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
