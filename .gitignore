@@ -26,3 +26,12 @@
 *.exe
 *.out
 *.app
+
+# CLion
+*.idea/*
+
+# Build
+*build*
+
+# MacOS
+*.DS_Store
